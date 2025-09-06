@@ -3,10 +3,22 @@ const ctx = canvas.getContext('2d');
 
 // Let's render it our way - Bottom Right and World Coords
 
+function canvasToWorldCoordinatesForXAxis(x){
+    return x/10;
+}
+
 class Game {
-    constructor(drawCanvas) {
+    constructor(drawCanvas, border) {
         this.drawCanvas = drawCanvas;
-        this.objects = []
+        // Border - Takes in array of two numbers (world coords)
+        this.border = border;
+        // Get corners
+        this.bottomLeft = [0, 0]; // Origin
+        this.topRight = border; // X:MAX Y:MAX
+        this.bottomRight = [border[0], 0]; // X:MAX Y:0
+        this.topLeft = [0, border[1]]; // X:0 Y:MAX
+
+        this.objects = [];
         this.player = undefined;
         this.running = true;
     }
@@ -51,19 +63,27 @@ class player {
         this.playerYVelocity -= this.gravity;
         this.worldY += this.playerYVelocity;
 
-
+        // Moving Stufffff (Y-Axis)
         if (this.worldY < 0) {
             this.isJumping = false;
             this.playerYVelocity = 0;
             this.worldY = 0;
         }
 
+        // Player movement (X-Axis)
         if (this.isJumping) {
-            // Airborne X-axis positional updates
             this.worldX += this.airborneXVelocity;
         } else {
-            // On land position update on the X-axis
             this.worldX += this.playerXVelocity;
+        }
+
+        // Border Detection (X-Axis)
+        if (this.worldX > 60 + canvasToWorldCoordinatesForXAxis(this.width) || this.worldX <= 0) {
+            if (this.worldX > 70){
+                this.worldX = 70;
+            } else if (this.worldX <= 0){
+                this.worldX = 0;
+            }
         }
 
         // Update positions into Canvas coords so I can draw
@@ -106,7 +126,7 @@ function handleInput(player) {
 
 var myPlayer = new player(10, 0);
 myPlayer.draw(ctx);
-var game = new Game(ctx);
+var game = new Game(ctx, [60, 80]);
 
 // Let's be completly honest - I stole this from stack overflow and I barely understand how it works HAHA
 let lastTime = 0;
