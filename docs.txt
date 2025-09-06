@@ -1,0 +1,7 @@
+
+World coords
+
+60x80 grid (10pxls each)
+
+X_w = X_c/10
+Y_w = (600 - Y_c)/10
