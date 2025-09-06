@@ -43,20 +43,29 @@ class player {
         this.isJumping = false; // Tells if character is airborne
         this.jumpStrength = 3.5;
         this.gravity = 0.2;
+        this.airborneXVelocity = 0;
     }
 
     update(deltaTime) {
         // Y velocity and Y position updates
         this.playerYVelocity -= this.gravity;
         this.worldY += this.playerYVelocity;
-        // X Position updates
-        this.worldX += this.playerXVelocity;
+
 
         if (this.worldY < 0) {
             this.isJumping = false;
             this.playerYVelocity = 0;
             this.worldY = 0;
         }
+
+        if (this.isJumping) {
+            // Airborne X-axis positional updates
+            this.worldX += this.airborneXVelocity;
+        } else {
+            // On land position update on the X-axis
+            this.worldX += this.playerXVelocity;
+        }
+
         // Update positions into Canvas coords so I can draw
         this.canvasX = this.worldX * 10;
         this.canvasY = (600 - this.worldY * 10) - this.height;
@@ -81,19 +90,17 @@ document.addEventListener('keyup', (event) => {
 });
 
 function handleInput(player) {
-    // Update the X velocity change
-    if (keyState['d']) {
+    // Check for jumping. Spacebar is ' '
+    if (keyState[' '] && !player.isJumping) {
+        player.isJumping = true;
+        player.playerYVelocity = player.jumpStrength;
+        player.airborneXVelocity = player.playerXVelocity;
+    } else if (keyState['d']) { // Update the X velocity change
         player.playerXVelocity = -1;
     } else if (keyState['f']) {
         player.playerXVelocity = 1;
     } else {
         player.playerXVelocity = 0;
-    }
-
-    // Check for jumping. Spacebar is ' '
-    if (keyState[' '] && !player.isJumping) {
-        player.isJumping = true;
-        player.playerYVelocity = player.jumpStrength;
     }
 }
 
