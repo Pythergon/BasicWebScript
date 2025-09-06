@@ -3,13 +3,14 @@ const ctx = canvas.getContext('2d');
 
 // Let's render it our way - Bottom Right and World Coords
 
-function canvasToWorldCoordinatesForXAxis(x){
+function mapCanvasToWorldX(x){
     return x/10;
 }
 
 class Game {
-    constructor(drawCanvas, border) {
+    constructor(drawCanvas, border, player, background) {
         this.drawCanvas = drawCanvas;
+        this.background = background;
         // Border - Takes in array of two numbers (world coords)
         this.border = border;
         // Get corners
@@ -19,18 +20,18 @@ class Game {
         this.topLeft = [0, border[1]]; // X:0 Y:MAX
 
         this.objects = [];
-        this.player = undefined;
+        this.player = player;
         this.running = true;
     }
 
     render() {
         this.drawCanvas.clearRect(0, 0, canvas.width, canvas.height);
+        this.drawCanvas.drawImage(this.background, 0, 0);
+        this.player.draw(this.drawCanvas);
     }
 
     update(deltaTime) {
-        for (let object of this.objects) {
-            console.log(object);
-        }
+        this.player.update(deltaTime);
     }
 
 }
@@ -78,7 +79,7 @@ class player {
         }
 
         // Border Detection (X-Axis)
-        if (this.worldX > 60 + canvasToWorldCoordinatesForXAxis(this.width) || this.worldX <= 0) {
+        if (this.worldX > 60 + mapCanvasToWorldX(this.width) || this.worldX <= 0) {
             // Add bounce to walls!
             this.airborneXVelocity = -this.airborneXVelocity;
             if (this.worldX > 70){
@@ -126,9 +127,11 @@ function handleInput(player) {
     }
 }
 
+const img = new Image();
+img.src = 'platform.png';
 var myPlayer = new player(10, 0);
 myPlayer.draw(ctx);
-var game = new Game(ctx, [60, 80]);
+var game = new Game(ctx, [60, 80], myPlayer, img);
 
 // Let's be completly honest - I stole this from stack overflow and I barely understand how it works HAHA
 let lastTime = 0;
@@ -139,10 +142,8 @@ function gameLoop(currentTime) {
     handleInput(myPlayer);
 
     game.update(deltaTime);
-    myPlayer.update(deltaTime);
 
     game.render();
-    myPlayer.draw(game.drawCanvas);
 
     // Re-queue the game loop
     requestAnimationFrame(gameLoop);
