@@ -3,34 +3,43 @@ const ctx = canvas.getContext('2d');
 
 // Let's render it our way - Bottom Right and World Coords
 
-function canvasToWorldCoordinatesForXAxis(x){
+function mapCanvasToWorldX(x){
     return x/10;
 }
 
 class Game {
-    constructor(drawCanvas, border) {
+    constructor(drawCanvas, player, background) {
         this.drawCanvas = drawCanvas;
-        // Border - Takes in array of two numbers (world coords)
-        this.border = border;
-        // Get corners
-        this.bottomLeft = [0, 0]; // Origin
-        this.topRight = border; // X:MAX Y:MAX
-        this.bottomRight = [border[0], 0]; // X:MAX Y:0
-        this.topLeft = [0, border[1]]; // X:0 Y:MAX
-
+        this.background = background;
         this.objects = [];
-        this.player = undefined;
+        this.player = player;
         this.running = true;
     }
 
+    handleInput() {
+        // Check for jumping. Spacebar is ' '
+        if (keyState[' '] && !this.player.isJumping) {
+            this.player.isJumping = true;
+            this.player.playerYVelocity = this.player.jumpStrength;
+            this.player.airborneXVelocity = this.player.playerXVelocity;
+        } else if (keyState['d']) { // Update the X velocity change
+            this.player.playerXVelocity = -1;
+        } else if (keyState['f']) {
+            this.player.playerXVelocity = 1;
+        } else {
+            this.player.playerXVelocity = 0;
+        }
+    }
+
+
     render() {
         this.drawCanvas.clearRect(0, 0, canvas.width, canvas.height);
+        this.drawCanvas.drawImage(this.background, 0, 0);
+        this.player.draw(this.drawCanvas);
     }
 
     update(deltaTime) {
-        for (let object of this.objects) {
-            console.log(object);
-        }
+        this.player.update(deltaTime);
     }
 
 }
@@ -56,6 +65,8 @@ class player {
         this.jumpStrength = 3.5;
         this.gravity = 0.2;
         this.airborneXVelocity = 0;
+        // Border Detection
+        this.touching = '';
     }
 
     update(deltaTime) {
@@ -71,28 +82,36 @@ class player {
         }
 
         // Player movement (X-Axis)
+        let newWorldX;
+
         if (this.isJumping) {
-            this.worldX += this.airborneXVelocity;
+            newWorldX = this.worldX + this.airborneXVelocity;
         } else {
-            this.worldX += this.playerXVelocity;
+            newWorldX = this.worldX + this.playerXVelocity;
         }
 
         // Border Detection (X-Axis)
-        if (this.worldX > 60 + canvasToWorldCoordinatesForXAxis(this.width) || this.worldX <= 0) {
-            // Add bounce to walls!
-            this.airborneXVelocity = -this.airborneXVelocity;
-            if (this.worldX > 70){
-                this.worldX = 70;
-            } else if (this.worldX <= 0){
-                this.worldX = 0;
-            }
+        const rightBorder = 60 + mapCanvasToWorldX(this.width);
+        const leftBorder = 0;
+
+        if (newWorldX > rightBorder) {
+            this.worldX = rightBorder; // Snap player to the wall.
+            this.airborneXVelocity = -this.airborneXVelocity; // Reverse velocity.
+            this.playerXVelocity = -this.playerXVelocity;
+        } else if (newWorldX < leftBorder) {
+            this.worldX = leftBorder; // Snap player to the wall.
+            this.airborneXVelocity = -this.airborneXVelocity; // Reverse velocity.
+            this.playerXVelocity = -this.playerXVelocity;
+        } else {
+            this.worldX = newWorldX;
         }
 
-        // Update positions into Canvas coords so I can draw
         this.canvasX = this.worldX * 10;
         this.canvasY = (600 - this.worldY * 10) - this.height;
 
     }
+
+
 
     // We'll see if we need this later
     draw(drawCanvas) {
@@ -111,24 +130,11 @@ document.addEventListener('keyup', (event) => {
     keyState[event.key] = false;
 });
 
-function handleInput(player) {
-    // Check for jumping. Spacebar is ' '
-    if (keyState[' '] && !player.isJumping) {
-        player.isJumping = true;
-        player.playerYVelocity = player.jumpStrength;
-        player.airborneXVelocity = player.playerXVelocity;
-    } else if (keyState['d']) { // Update the X velocity change
-        player.playerXVelocity = -1;
-    } else if (keyState['f']) {
-        player.playerXVelocity = 1;
-    } else {
-        player.playerXVelocity = 0;
-    }
-}
-
+const img = new Image();
+img.src = 'platform.png';
 var myPlayer = new player(10, 0);
 myPlayer.draw(ctx);
-var game = new Game(ctx, [60, 80]);
+var game = new Game(ctx, myPlayer, img);
 
 // Let's be completly honest - I stole this from stack overflow and I barely understand how it works HAHA
 let lastTime = 0;
@@ -136,13 +142,9 @@ function gameLoop(currentTime) {
     const deltaTime = (currentTime - lastTime) / 1000;
     lastTime = currentTime;
 
-    handleInput(myPlayer);
-
+    game.handleInput();
     game.update(deltaTime);
-    myPlayer.update(deltaTime);
-
     game.render();
-    myPlayer.draw(game.drawCanvas);
 
     // Re-queue the game loop
     requestAnimationFrame(gameLoop);
