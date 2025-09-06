@@ -81,6 +81,7 @@ class player {
         // Border Detection (X-Axis)
         if (this.worldX > 60 + mapCanvasToWorldX(this.width) || this.worldX <= 0) {
             // Add bounce to walls!
+            this.airborneXVelocity = -this.airborneXVelocity;
             if (this.worldX > 70){
                 this.worldX = 70;
             } else if (this.worldX <= 0){
