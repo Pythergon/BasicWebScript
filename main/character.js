@@ -50,7 +50,7 @@ class player {
         this.playerYVelocity -= this.gravity;
         this.worldY += this.playerYVelocity;
         // X Position updates
-        this.worldX += this.playerXVelocity
+        this.worldX += this.playerXVelocity;
 
         if (this.worldY < 0) {
             this.isJumping = false;
@@ -101,8 +101,8 @@ var myPlayer = new player(10, 0);
 myPlayer.draw(ctx);
 var game = new Game(ctx);
 
+// Let's be completly honest - I stole this from stack overflow and I barely understand how it works HAHA
 let lastTime = 0;
-
 function gameLoop(currentTime) {
     const deltaTime = (currentTime - lastTime) / 1000;
     lastTime = currentTime;
