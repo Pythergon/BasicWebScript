@@ -14,3 +14,5 @@ The Jump mechanic displeases me because you can change your direction (X-Vel) mi
 We can fix this by detecting when the player is midair and locking the X-Vel until landing
 I'm going to fix this by assigning a new variable called the playerJumpXVelocity
 
+Did I use AI for the platform detection???
+HELL YEAH OH MY GEEZ IF I HAD TO TYPE BASICALLY THE SAME LINES OF CODE TWENTY TIMES OVER ID QUIT MAN

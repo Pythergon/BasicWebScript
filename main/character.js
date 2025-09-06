@@ -11,7 +11,7 @@ class Game {
     constructor(drawCanvas, player, background) {
         this.drawCanvas = drawCanvas;
         this.background = background;
-        this.objects = [];
+        this.platforms = [];
         this.player = player;
         this.running = true;
     }
@@ -40,8 +40,67 @@ class Game {
 
     update(deltaTime) {
         this.player.update(deltaTime);
+        // Move the player first, then check and resolve collisions
+        this.resolveCollisions();
     }
 
+    resolveCollisions() {
+        // Assume the player is not grounded at the beginning of each frame.
+        this.player.isGrounded = false;
+
+        for (let i = 0; i < this.platforms.length; i++) {
+            const platform = this.platforms[i];
+
+            if (
+                this.player.canvasX < platform.pixel1X + platform.width &&
+                this.player.canvasX + this.player.width > platform.pixel1X &&
+                this.player.canvasY < platform.pixel1Y + platform.height &&
+                this.player.canvasY + this.player.height > platform.pixel1Y
+            ) {
+                const prevPlayerBottom = this.player.prevCanvasY + this.player.height;
+                const prevPlayerRight = this.player.prevCanvasX + this.player.width;
+                const prevPlayerLeft = this.player.prevCanvasX;
+
+                if (prevPlayerBottom <= platform.pixel1Y) {
+                    this.player.isJumping = false;
+                    this.player.playerYVelocity = 0;
+                    this.player.canvasY = platform.pixel1Y - this.player.height;
+                    this.player.isGrounded = true; // Player is on the ground
+                } else if (this.player.canvasY >= platform.pixel1Y + platform.height) {
+                    this.player.playerYVelocity = 0;
+                    this.player.canvasY = platform.pixel1Y + platform.height;
+                } else if (prevPlayerRight <= platform.pixel1X) {
+                    this.player.canvasX = platform.pixel1X - this.player.width;
+                    this.player.playerXVelocity = 0;
+                    this.player.airborneXVelocity = 0;
+                } else if (prevPlayerLeft >= platform.pixel1X + platform.width) {
+                    this.player.canvasX = platform.pixel1X + platform.width;
+                    this.player.playerXVelocity = 0;
+                    this.player.airborneXVelocity = 0;
+                }
+            }
+        }
+    }
+}
+
+class platform{
+    constructor(pixel1X, pixel1Y, pixel2X, pixel2Y) {
+        this.pixel1X = pixel1X;
+        this.pixel1Y = pixel1Y;
+        this.pixel2X = pixel2X;
+        this.pixel2Y = pixel2Y;
+        this.height = pixel2Y - pixel1Y; // 50
+        this.width = pixel2X - pixel1X; // 200
+        this.world1X = pixel1X/10;
+        this.world1Y = (600 - pixel1Y)/10;
+        this.world2X = pixel2X/10;
+        this.world2Y = (600 - pixel2Y)/10;
+    }
+
+    DEBUG_ONLY_draw(){
+        ctx.fillStyle = 'red';
+        ctx.fillRect(this.pixel1X, this.pixel1Y, this.width, this.height);
+    }
 }
 
 class player {
@@ -65,13 +124,24 @@ class player {
         this.jumpStrength = 3.5;
         this.gravity = 0.2;
         this.airborneXVelocity = 0;
-        // Border Detection
-        this.touching = '';
+        // Detection stuff
+        this.prevCanvasX = this.canvasX;
+        this.prevCanvasY = this.canvasY;
+        this.isGrounded = false;
+
     }
 
     update(deltaTime) {
+        // Detection stuff
+        this.prevCanvasX = this.canvasX;
+        this.prevCanvasY = this.canvasY;
         // Y velocity and Y position updates
-        this.playerYVelocity -= this.gravity;
+
+        // This is the core change: apply gravity only if not grounded
+        if (!this.isGrounded) {
+            this.playerYVelocity -= this.gravity;
+        }
+
         this.worldY += this.playerYVelocity;
 
         // Moving Stufffff (Y-Axis)
@@ -132,9 +202,11 @@ document.addEventListener('keyup', (event) => {
 
 const img = new Image();
 img.src = 'platform.png';
+var myPlatform = new platform(500, 500, 700, 550);
 var myPlayer = new player(10, 0);
 myPlayer.draw(ctx);
 var game = new Game(ctx, myPlayer, img);
+game.platforms.push(myPlatform);
 
 // Let's be completly honest - I stole this from stack overflow and I barely understand how it works HAHA
 let lastTime = 0;
