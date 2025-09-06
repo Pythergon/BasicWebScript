@@ -40,7 +40,7 @@ class player {
         this.playerXVelocity = 0;
         this.playerYVelocity = 0;
         // jumping?... physics?!
-        this.isJumping = false;
+        this.isJumping = false; // Tells if character is airborne
         this.jumpStrength = 3.5;
         this.gravity = 0.2;
     }
@@ -57,10 +57,6 @@ class player {
             this.playerYVelocity = 0;
             this.worldY = 0;
         }
-        if (this.worldY === 0) {
-            this.playerXVelocity = 0;
-        }
-
         // Update positions into Canvas coords so I can draw
         this.canvasX = this.worldX * 10;
         this.canvasY = (600 - this.worldY * 10) - this.height;
@@ -85,19 +81,17 @@ document.addEventListener('keyup', (event) => {
 });
 
 function handleInput(player) {
-    // Check for horizontal movement
+    // Update the X velocity change
     if (keyState['d']) {
         player.playerXVelocity = -1;
     } else if (keyState['f']) {
         player.playerXVelocity = 1;
     } else {
-        // If neither 'd' nor 'f' are pressed, stop horizontal movement
         player.playerXVelocity = 0;
     }
 
     // Check for jumping. Spacebar is ' '
     if (keyState[' '] && !player.isJumping) {
-        console.log("Pressed: Spacebar");
         player.isJumping = true;
         player.playerYVelocity = player.jumpStrength;
     }
